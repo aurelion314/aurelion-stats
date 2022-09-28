@@ -108,6 +108,7 @@ def scatter(metal_data, name=None, single=False):
         metal_site_washed_data = metal_site_data[metal_site_data['LOC_SUBTYPE'] == 'WASHED']
         metal_site_unwashed_data = metal_site_data[metal_site_data['LOC_SUBTYPE'].str.contains('UNWASH')]
         #graph data over time but use the same y axis
+        plt.clf()
         plt.scatter(metal_ref_unwashed_data['SAMPLE_DATE'], metal_ref_unwashed_data['REPORT_RESULT_VALUE'], label='REF Unwashed', alpha=0.5)
         plt.scatter(metal_site_unwashed_data['SAMPLE_DATE'], metal_site_unwashed_data['REPORT_RESULT_VALUE'], label='Site Unwashed', alpha=0.5)
         #get the max value for the y axis
@@ -119,6 +120,7 @@ def scatter(metal_data, name=None, single=False):
         plt.savefig(f'files/{name}_unwashed.png')
         # plt.show()
 
+        plt.clf()
         plt.scatter(metal_ref_washed_data['SAMPLE_DATE'], metal_ref_washed_data['REPORT_RESULT_VALUE'], label='REF Washed', alpha=0.5)
         plt.scatter(metal_site_washed_data['SAMPLE_DATE'], metal_site_washed_data['REPORT_RESULT_VALUE'], label='Site Washed', alpha=0.5)
         plt.ylim(0, max_y*1.1)
