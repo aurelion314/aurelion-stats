@@ -183,7 +183,7 @@ def to_sheet(metal_data, metal_stats, workbook=None):
         row += 1
         sheet.write(row, col, 'Mean value')
         sheet.write_row(row, col+1, [stats['all_time']['mean']['unwashed_site'], stats['all_time']['mean']['unwashed_ref'], stats['all_time']['mean']['washed_site'], stats['all_time']['mean']['washed_ref']])
-        row += 10
+        row += 2
 
         #generate scatter plot
         metal_type_data = metal_data[metal_data['LOC_TYPE'] == sample_type]
@@ -191,10 +191,12 @@ def to_sheet(metal_data, metal_stats, workbook=None):
 
         #add image to sheet
         if sample_type == 'SOIL':
-            sheet.insert_image(row-9, col+1, f'files/{sample_type}.png', {'x_scale': 0.7, 'y_scale': 0.7})
+            sheet.insert_image(row, col+3, f'files/{sample_type}.png', {'x_scale': 0.65, 'y_scale': 0.65})
         else:
-            sheet.insert_image(row-9, col+1, f'files/{sample_type}_washed.png', {'x_scale': 0.7, 'y_scale': 0.7})
-            sheet.insert_image(row-9, col+5, f'files/{sample_type}_unwashed.png', {'x_scale': 0.7, 'y_scale': 0.7})
+            sheet.insert_image(row, col+3, f'files/{sample_type}_washed.png', {'x_scale': 0.65, 'y_scale': 0.65})
+            sheet.insert_image(row, col+6, f'files/{sample_type}_unwashed.png', {'x_scale': 0.65, 'y_scale': 0.65})
+
+        row += 6
 
         #Lasest Year
         latest_stats = stats['latest']
@@ -210,7 +212,7 @@ def to_sheet(metal_data, metal_stats, workbook=None):
             if latest_stats['washed_ttest']['p'] < 0.05:
                 sheet.write(row, col, 'Washed Site and Ref are different', format_bad)
             else:
-                sheet.write(row, col, 'Washed Site and Ref are not stat diff', format_good)
+                sheet.write(row, col, 'Washed Site and Ref are similar', format_good)
         sheet.write(row, col+1, latest_stats['washed_ttest']['p'])
         sheet.write(row, col+2, latest_stats['washed_ttest']['t'])
         
@@ -221,11 +223,11 @@ def to_sheet(metal_data, metal_stats, workbook=None):
             if latest_stats['unwashed_ttest']['p'] < 0.05:
                 sheet.write(row, col, 'Unwashed Site and Ref are different', format_bad)
             else:
-                sheet.write(row, col, 'Unwashed Site and Ref are not stat diff', format_good)
+                sheet.write(row, col, 'Unwashed Site and Ref are similar', format_good)
         sheet.write(row, col+1, latest_stats['unwashed_ttest']['p'])
         sheet.write(row, col+2, latest_stats['unwashed_ttest']['t'])
         
-        row += 10
+        row += 8
 
         #Historic
         historic_stats = stats['historic']
