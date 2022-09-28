@@ -8,6 +8,15 @@ from stat_functions import *
 uploaded_file = st.file_uploader("Upload Files", type=["csv", "xlsx"])
 msg = st.empty()
 
+#we need a files folder. Make if it doesn't exist
+try: 
+    if not os.path.exists('files'):
+        os.makedirs('files')
+except Exception as e:
+    st.warning('Error creating files folder.')
+    st.error(e)
+    st.stop()
+
 if not uploaded_file:
     msg.info("Please upload a file containing raw sample data")
     st.stop()
@@ -46,6 +55,7 @@ if uploaded_file:
     if not chemical or chemical == ' ':
         st.stop()
     if chemical:
+        msg.info('Calculating statistics..')
         #get alumnium data
         metal_data = df[df['CHEMICAL_NAME'] == chemical]
         metal_name = metal_data['CHEMICAL_NAME'].unique()[0]

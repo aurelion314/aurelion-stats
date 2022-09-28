@@ -117,7 +117,7 @@ def scatter(metal_data, name=None, single=False):
         plt.legend()
         plt.title('Unwashed')
         plt.savefig(f'files/{name}_unwashed.png')
-        plt.show()
+        # plt.show()
 
         plt.scatter(metal_ref_washed_data['SAMPLE_DATE'], metal_ref_washed_data['REPORT_RESULT_VALUE'], label='REF Washed', alpha=0.5)
         plt.scatter(metal_site_washed_data['SAMPLE_DATE'], metal_site_washed_data['REPORT_RESULT_VALUE'], label='Site Washed', alpha=0.5)
@@ -126,13 +126,13 @@ def scatter(metal_data, name=None, single=False):
         plt.legend()
         plt.title('Washed')
         plt.savefig(f'files/{name}_washed.png')
-        plt.show()
+        # plt.show()
     else:
         plt.clf()
         plt.scatter(metal_ref_data['SAMPLE_DATE'], metal_ref_data['REPORT_RESULT_VALUE'], label='REF', alpha=0.5)
         plt.scatter(metal_site_data['SAMPLE_DATE'], metal_site_data['REPORT_RESULT_VALUE'], label='Site', alpha=0.5)
         # plt.legend()
-        plt.show()
+        # plt.show()
         #save plot image to files folder
         plt.savefig(f'files/{name}.png')
 
