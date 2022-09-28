@@ -40,7 +40,7 @@ if uploaded_file:
     required_cols = ['LOC_ID', 'LOC_TYPE', 'LOC_SUBTYPE', 'CHEMICAL_NAME', 'REPORT_RESULT_VALUE', 'REPORT_RESULT_UNIT', 'SAMPLE_DATE']
     col_names = df.columns
     if not set(required_cols).issubset(col_names):
-        msg.warning("Missing required columns:", set(required_cols) - set(col_names))
+        msg.warning("Missing required columns: " + ", ".join(set(required_cols) - set(col_names)))
         st.stop()
 
     df['SAMPLE_DATE'] = pd.to_datetime(df['SAMPLE_DATE'])#, format='%m/%d/%Y')

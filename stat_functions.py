@@ -162,7 +162,10 @@ def to_sheet(metal_data, metal_stats, workbook=None):
     
     #Metal Name
     sheet.write(0, 0, metal_name.capitalize(), format_fill)
-    sheet.write(1, 0, 'mg/kg', format_italic)
+    #get the unit type (REPORT_RESULT_UNIT)
+    unit_type = metal_data['REPORT_RESULT_UNIT'].unique()[0]
+
+    sheet.write(1, 0, unit_type, format_italic)
 
     row, col = 2, 0
     for sample_type, stats in metal_stats.items():
