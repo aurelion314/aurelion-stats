@@ -133,7 +133,8 @@ def scatter(metal_data, name=None, single=False):
         plt.clf()
         plt.scatter(metal_ref_data['SAMPLE_DATE'], metal_ref_data['REPORT_RESULT_VALUE'], label='REF', alpha=0.5)
         plt.scatter(metal_site_data['SAMPLE_DATE'], metal_site_data['REPORT_RESULT_VALUE'], label='Site', alpha=0.5)
-        # plt.legend()
+        plt.legend()
+        plt.gca().xaxis.set_major_formatter(DateFormatter('%Y'))
         # plt.show()
         #save plot image to files folder
         plt.savefig(f'files/{name}.png')
