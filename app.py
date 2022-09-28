@@ -22,6 +22,7 @@ if uploaded_file:
             df = pd.read_excel(uploaded_file)
     except Exception as e:
         msg.warning("Error reading file. Please ensure it is a valid csv or excel file")
+        st.error(e)
         st.stop()
     msg.write("")
     # st.write(df.head())
