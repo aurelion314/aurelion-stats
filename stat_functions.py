@@ -154,7 +154,7 @@ def to_sheet(metal_data, metal_stats, workbook=None):
     #set all columns to 20 width
     sheet.set_column(1, 100, 18)
     #warning with a soft yellow background
-    format_warning = workbook.add_format({'bg_color': '#f5cd6e'})
+    format_warning = workbook.add_format({'bg_color': '#f5ed9e'})
     format_fill = workbook.add_format({'bg_color': '#DCE6F1'})
     format_italic = workbook.add_format({'italic': True, 'font_size': 9})
     format_bold = workbook.add_format({'bold': True})
@@ -191,7 +191,7 @@ def to_sheet(metal_data, metal_stats, workbook=None):
         row += 1
         sheet.write(row, col, 'Correlation with time (-1 to 1)')
         # write the correlation values and add warning format if above .3
-        values = [stats['all_time']['mean']['unwashed_site'], stats['all_time']['mean']['unwashed_ref'], stats['all_time']['mean']['washed_site'], stats['all_time']['mean']['washed_ref']]
+        values = [stats['all_time']['correlation']['unwashed_site'], stats['all_time']['correlation']['unwashed_ref'], stats['all_time']['correlation']['washed_site'], stats['all_time']['correlation']['washed_ref']]
         for i, value in enumerate(values):
             if not value:
                 continue
@@ -199,10 +199,6 @@ def to_sheet(metal_data, metal_stats, workbook=None):
                 sheet.write(row, col+i+1, value, format_warning)
             else:
                 sheet.write(row, col+i+1, value)
-        # sheet.write(row, col+1, stats['all_time']['mean']['unwashed_site'], format_warning if abs(stats['all_time']['mean']['unwashed_site']) > .35 else None)
-        # sheet.write(row, col+2, stats['all_time']['mean']['unwashed_ref'], format_warning if abs(stats['all_time']['mean']['unwashed_ref']) > .35 else None)
-        # sheet.write(row, col+3, stats['all_time']['mean']['washed_site'], format_warning if abs(stats['all_time']['mean']['washed_site']) > .35 else None)
-        # sheet.write(row, col+4, stats['all_time']['mean']['washed_ref'], format_warning if abs(stats['all_time']['mean']['washed_ref']) > .35 else None)
         # sheet.write_row(row, col+1, [stats['all_time']['correlation']['unwashed_site'], stats['all_time']['correlation']['unwashed_ref'], stats['all_time']['correlation']['washed_site'], stats['all_time']['correlation']['washed_ref']], number_format)
         row += 1
         sheet.write(row, col, 'Mean value')
