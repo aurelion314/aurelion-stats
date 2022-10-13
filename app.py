@@ -66,9 +66,6 @@ try:
             stats = get_metal_stats(metal_data, metal_name)
             to_sheet(metal_data, stats, workbook)
 
-            if i > 4: #Testing
-                break
-        
         workbook.close()
 
     else:
