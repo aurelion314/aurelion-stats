@@ -154,7 +154,6 @@ def to_sheet(metal_data, metal_stats, workbook=None):
     #set all columns to 20 width
     sheet.set_column(1, 100, 18)
     #warning with a soft yellow background
-    format_warning = workbook.add_format({'bg_color': '#f5ed9e'})
     format_fill = workbook.add_format({'bg_color': '#DCE6F1'})
     format_italic = workbook.add_format({'italic': True, 'font_size': 9})
     format_bold = workbook.add_format({'bold': True})
@@ -162,6 +161,7 @@ def to_sheet(metal_data, metal_stats, workbook=None):
     decimals = metal_data['REPORT_RESULT_VALUE'].apply(lambda x: len(str(x).split('.')[1]) if '.' in str(x) else 0).max()
     decimals = max(decimals, 2)
     number_format = f'#,##0.{decimals * "0"}'
+    format_warning = workbook.add_format({'bg_color': '#f5ed9e', 'num_format': number_format})
     number_format = workbook.add_format({'num_format': number_format})
     workbook.add_format()
     #italic and size 9
