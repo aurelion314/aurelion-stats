@@ -50,40 +50,57 @@ df['SAMPLE_YEAR'] = df['SAMPLE_DATE'].dt.year
 metals = df['CHEMICAL_NAME'].unique()
 metals.sort()
 
-msg.info('Currently testing for a single chemical. Select one from the dropdown below.')
-chemical = st.selectbox("Chemicals:", [' '] + list(metals))
+msg.info('Select a chemical from the dropdown below.')
+chemical = st.selectbox("Chemicals:", [' '] + ['All'] + list(metals))
 if not chemical or chemical == ' ':
     st.stop()
 msg.info('Calculating statistics..')
-#get alumnium data
-metal_data = df[df['CHEMICAL_NAME'] == chemical]
-metal_name = metal_data['CHEMICAL_NAME'].unique()[0]
 try: 
-    stats = get_metal_stats(metal_data, metal_name)
-    to_sheet(metal_data, stats)
+    if chemical == 'All':
+        filename =  os.path.join(current_path, "files/output.xlsx")
+        workbook = xlsxwriter.Workbook(filename)
+        for i, metal in enumerate(list(metals)):
+            msg.info(f"Calculating Statistics for {metal} ({i+1}/{len(metals)})")
+            metal_data = df[df['CHEMICAL_NAME'] == metal]
+            metal_name = metal_data['CHEMICAL_NAME'].unique()[0]
+            stats = get_metal_stats(metal_data, metal_name)
+            to_sheet(metal_data, stats, workbook)
 
-    st.write('Sample count:', len(metal_data))
+            if i > 4: #Testing
+                break
+        
+        workbook.close()
 
-    #lets also show a plot
-    plot_type = st.selectbox("Plot Type:", ['Scatter', 'Line', 'Scatter by Site'])
-    if plot_type == 'Scatter':
-        scatter(metal_data, metal_name, True)
-        st.image(f'files/{metal_name}.png')
-    elif plot_type == 'Line':
-        siteLineChart(metal_data, metal_name)
-        st.image(f'files/{metal_name}_site_line.png')
-    elif plot_type == 'Scatter by Site':
-        siteScatter(metal_data, metal_name)
-        st.image(f'files/{metal_name}_site_scatter.png')
-    #filter colums to only the required cols
-    metal_data = metal_data[required_cols]
-    st.write(metal_data)
+    else:
+        #get single data
+        metal_data = df[df['CHEMICAL_NAME'] == chemical]
+        metal_name = metal_data['CHEMICAL_NAME'].unique()[0]
+        stats = get_metal_stats(metal_data, metal_name)
+        to_sheet(metal_data, stats)
+
+        st.write('Sample count:', len(metal_data))
+
+        #lets also show a plot
+        plot_type = st.selectbox("Plot Type:", ['Scatter', 'Line', 'Scatter by Site'])
+        if plot_type == 'Scatter':
+            scatter(metal_data, metal_name, True)
+            st.image(f'files/{metal_name}.png')
+        elif plot_type == 'Line':
+            siteLineChart(metal_data, metal_name)
+            st.image(f'files/{metal_name}_site_line.png')
+        elif plot_type == 'Scatter by Site':
+            siteScatter(metal_data, metal_name)
+            st.image(f'files/{metal_name}_site_scatter.png')
+        #filter colums to only the required cols
+        metal_data = metal_data[required_cols]
+        st.write(metal_data)
     
 except Exception as e:
     msg.warning("Error processing data. Please ensure the data is valid")
     st.write(metal_data)
     st.error(e)
     st.stop()
+
 msg.info("Ready for download.")
 
 with open ("files/output.xlsx", "rb") as f:

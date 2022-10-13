@@ -141,9 +141,10 @@ def scatter(metal_data, name=None, single=False):
 
 import numpy as np
 
-def to_sheet(metal_data, metal_stats, workbook=None):
+def to_sheet(metal_data, metal_stats, workbook=None, single_sheet=False):
     current_path = os.path.dirname(os.path.abspath(__file__))
     if not workbook:
+        single_sheet = True
         filename =  os.path.join(current_path, "files/output.xlsx")
         workbook = xlsxwriter.Workbook(filename)
     metal_name = metal_data['CHEMICAL_NAME'].unique()[0]
@@ -195,10 +196,10 @@ def to_sheet(metal_data, metal_stats, workbook=None):
         for i, value in enumerate(values):
             if not value:
                 continue
-            if value > .3:
+            if value > .35:
                 sheet.write(row, col+i+1, value, format_warning)
             else:
-                sheet.write(row, col+i+1, value)
+                sheet.write(row, col+i+1, value, number_format)
         # sheet.write_row(row, col+1, [stats['all_time']['correlation']['unwashed_site'], stats['all_time']['correlation']['unwashed_ref'], stats['all_time']['correlation']['washed_site'], stats['all_time']['correlation']['washed_ref']], number_format)
         row += 1
         sheet.write(row, col, 'Mean value')
@@ -214,7 +215,7 @@ def to_sheet(metal_data, metal_stats, workbook=None):
         format_good = workbook.add_format({'bg_color': '#C6EFCE'})
         format_bad = workbook.add_format({'bg_color': '#FFC7CE'})
         if not latest_stats['washed_ttest']['p']:
-            sheet.write(row, col, 'Not enough Washed data for t test', format_good)
+            sheet.write(row, col, 'Not enough Washed data for t test')
         else:
             if latest_stats['washed_ttest']['p'] < 0.05:
                 sheet.write(row, col, 'Washed Site and Ref are different', format_bad)
@@ -369,7 +370,10 @@ def to_sheet(metal_data, metal_stats, workbook=None):
         
         row += 2
 
-    workbook.close()
+    if single_sheet:
+        workbook.close()
+    else:
+        return workbook
 
 def siteLineChartSns(metal_data, name='site_line_chart'):
     import seaborn as sns
