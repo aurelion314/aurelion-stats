@@ -117,7 +117,7 @@ def scatter(metal_data, name=None, single=False):
         plt.gca().xaxis.set_major_formatter(DateFormatter('%Y'))
         plt.legend()
         plt.title('Unwashed')
-        plt.savefig(f'files/{name}_unwashed.png')
+        plt.savefig(f'files/{name}_unwashed.png', bbox_inches='tight', dpi=300)
         # plt.show()
 
         plt.clf()
@@ -127,7 +127,7 @@ def scatter(metal_data, name=None, single=False):
         plt.gca().xaxis.set_major_formatter(DateFormatter('%Y'))
         plt.legend()
         plt.title('Washed')
-        plt.savefig(f'files/{name}_washed.png')
+        plt.savefig(f'files/{name}_washed.png', bbox_inches='tight', dpi=300)
         # plt.show()
     else:
         plt.clf()
@@ -137,7 +137,7 @@ def scatter(metal_data, name=None, single=False):
         plt.gca().xaxis.set_major_formatter(DateFormatter('%Y'))
         # plt.show()
         #save plot image to files folder
-        plt.savefig(f'files/{name}.png')
+        plt.savefig(f'files/{name}.png', bbox_inches='tight', dpi=300)
 
 import numpy as np
 
@@ -153,10 +153,16 @@ def to_sheet(metal_data, metal_stats, workbook=None):
     sheet.set_column(0, 0, 32)
     #set all columns to 20 width
     sheet.set_column(1, 100, 18)
+    #warning with a soft yellow background
+    format_warning = workbook.add_format({'bg_color': '#f5cd6e'})
     format_fill = workbook.add_format({'bg_color': '#DCE6F1'})
     format_italic = workbook.add_format({'italic': True, 'font_size': 9})
     format_bold = workbook.add_format({'bold': True})
-    number_format = workbook.add_format({'num_format': '0.00'})
+    #what is the largest number of decimals in the data?
+    decimals = metal_data['REPORT_RESULT_VALUE'].apply(lambda x: len(str(x).split('.')[1]) if '.' in str(x) else 0).max()
+    decimals = max(decimals, 2)
+    number_format = f'#,##0.{decimals * "0"}'
+    number_format = workbook.add_format({'num_format': number_format})
     workbook.add_format()
     #italic and size 9
     
@@ -174,7 +180,8 @@ def to_sheet(metal_data, metal_stats, workbook=None):
         years = metal_data['SAMPLE_YEAR'].unique()
         num_years = len(years)
         #Group/Merge Cells
-        sheet.merge_range(row, col, row, col+num_years+1, sample_type.upper(), format_fill)
+        num_cols = max([num_years + 1, 15])
+        sheet.merge_range(row, col, row, num_cols, sample_type.upper(), format_fill)
         row += 2
 
         #All Time
@@ -183,31 +190,23 @@ def to_sheet(metal_data, metal_stats, workbook=None):
 
         row += 1
         sheet.write(row, col, 'Correlation with time (-1 to 1)')
-        sheet.write_row(row, col+1, [stats['all_time']['correlation']['unwashed_site'], stats['all_time']['correlation']['unwashed_ref'], stats['all_time']['correlation']['washed_site'], stats['all_time']['correlation']['washed_ref']])
+        # write the correlation values and add warning format if above .3
+        sheet.write(row, col+1, stats['all_time']['mean']['unwashed_site'], format_warning if abs(stats['all_time']['mean']['unwashed_site']) > .35 else None)
+        sheet.write(row, col+2, stats['all_time']['mean']['unwashed_ref'], format_warning if abs(stats['all_time']['mean']['unwashed_ref']) > .35 else None)
+        sheet.write(row, col+3, stats['all_time']['mean']['washed_site'], format_warning if abs(stats['all_time']['mean']['washed_site']) > .35 else None)
+        sheet.write(row, col+4, stats['all_time']['mean']['washed_ref'], format_warning if abs(stats['all_time']['mean']['washed_ref']) > .35 else None)
+        # sheet.write_row(row, col+1, [stats['all_time']['correlation']['unwashed_site'], stats['all_time']['correlation']['unwashed_ref'], stats['all_time']['correlation']['washed_site'], stats['all_time']['correlation']['washed_ref']], number_format)
         row += 1
         sheet.write(row, col, 'Mean value')
-        sheet.write_row(row, col+1, [stats['all_time']['mean']['unwashed_site'], stats['all_time']['mean']['unwashed_ref'], stats['all_time']['mean']['washed_site'], stats['all_time']['mean']['washed_ref']])
+        sheet.write_row(row, col+1, [stats['all_time']['mean']['unwashed_site'], stats['all_time']['mean']['unwashed_ref'], stats['all_time']['mean']['washed_site'], stats['all_time']['mean']['washed_ref']], number_format)
         row += 2
-
-        #generate scatter plot
-        metal_type_data = metal_data[metal_data['LOC_TYPE'] == sample_type]
-        scatter(metal_type_data, sample_type)
-
-        #add image to sheet
-        if sample_type == 'SOIL':
-            sheet.insert_image(row, col+3, f'files/{sample_type}.png', {'x_scale': 0.65, 'y_scale': 0.65})
-        else:
-            sheet.insert_image(row, col+3, f'files/{sample_type}_washed.png', {'x_scale': 0.65, 'y_scale': 0.65})
-            sheet.insert_image(row, col+6, f'files/{sample_type}_unwashed.png', {'x_scale': 0.65, 'y_scale': 0.65})
-
-        row += 6
 
         #Lasest Year
         latest_stats = stats['latest']
         sheet.write(row, col, f"Latest Year ({latest_stats['year']})", format_bold)
-        sheet.write_row(row, col+1, ['p-value', 'statistic'])
+        sheet.write_row(row, col+1, ['p-value', 't-test'])
         row += 1
-        
+
         format_good = workbook.add_format({'bg_color': '#C6EFCE'})
         format_bad = workbook.add_format({'bg_color': '#FFC7CE'})
         if not latest_stats['washed_ttest']['p']:
@@ -217,8 +216,8 @@ def to_sheet(metal_data, metal_stats, workbook=None):
                 sheet.write(row, col, 'Washed Site and Ref are different', format_bad)
             else:
                 sheet.write(row, col, 'Washed Site and Ref are similar', format_good)
-        sheet.write(row, col+1, latest_stats['washed_ttest']['p'])
-        sheet.write(row, col+2, latest_stats['washed_ttest']['t'])
+        sheet.write(row, col+1, latest_stats['washed_ttest']['p'], number_format)
+        sheet.write(row, col+2, latest_stats['washed_ttest']['t'], number_format)
         
         row += 1
         if not latest_stats['unwashed_ttest']['p']:
@@ -228,10 +227,30 @@ def to_sheet(metal_data, metal_stats, workbook=None):
                 sheet.write(row, col, 'Unwashed Site and Ref are different', format_bad)
             else:
                 sheet.write(row, col, 'Unwashed Site and Ref are similar', format_good)
-        sheet.write(row, col+1, latest_stats['unwashed_ttest']['p'])
-        sheet.write(row, col+2, latest_stats['unwashed_ttest']['t'])
+        sheet.write(row, col+1, latest_stats['unwashed_ttest']['p'], number_format)
+        sheet.write(row, col+2, latest_stats['unwashed_ttest']['t'], number_format)
+        row += 2
+
+        #Charts
+        metal_type_data = metal_data[metal_data['LOC_TYPE'] == sample_type]
+        scatter(metal_type_data, sample_type)
+        siteLineChart(metal_type_data, sample_type)
+        siteScatter(metal_type_data, sample_type)
         
-        row += 8
+        # add image to sheet
+        if sample_type == 'SOIL':
+            sheet.insert_image(row, col+1, f'files/{sample_type}.png', {'x_scale': 0.65, 'y_scale': 0.65})
+            col += 4
+        else:
+            sheet.insert_image(row, col+1, f'files/{sample_type}_washed.png', {'x_scale': 0.65, 'y_scale': 0.65})
+            sheet.insert_image(row, col+4, f'files/{sample_type}_unwashed.png', {'x_scale': 0.65, 'y_scale': 0.65})
+            col += 7
+        sheet.insert_image(row, col, f'files/{sample_type}_site_scatter.png', {'x_scale': 0.65, 'y_scale': 0.55})
+        sheet.insert_image(row, col+3, f'files/{sample_type}_site_line.png', {'x_scale': 0.65, 'y_scale': 0.65})
+        col = 0
+
+        
+        row += 15
 
         #Historic
         historic_stats = stats['historic']
@@ -246,20 +265,20 @@ def to_sheet(metal_data, metal_stats, workbook=None):
             sheet.write_row(row, col+2, [site[year]['count'] for year in years])
             row += 1
             sheet.write(row, col, 'Site Mean')
-            sheet.write_row(row, col+2, [site[year]['mean'] for year in years])
+            sheet.write_row(row, col+2, [site[year]['mean'] for year in years], number_format)
             row += 1
             sheet.write(row, col, 'Site Standard Deviation')
-            sheet.write_row(row, col+2, [site[year]['std'] for year in years])
+            sheet.write_row(row, col+2, [site[year]['std'] for year in years], number_format)
             #Now do Ref
             row += 1
             sheet.write(row, col, 'Ref Sample Count')
             sheet.write_row(row, col+2, [ref[year]['count'] for year in years])
             row += 1
             sheet.write(row, col, 'Ref Mean')
-            sheet.write_row(row, col+2, [ref[year]['mean'] for year in years])
+            sheet.write_row(row, col+2, [ref[year]['mean'] for year in years], number_format)
             row += 1
             sheet.write(row, col, 'Ref Standard Deviation')
-            sheet.write_row(row, col+2, [ref[year]['std'] for year in years])
+            sheet.write_row(row, col+2, [ref[year]['std'] for year in years], number_format)
             #ttest results
             row += 1
             sheet.write(row, col, 'Site vs Ref T-Test')
@@ -276,7 +295,7 @@ def to_sheet(metal_data, metal_stats, workbook=None):
             sheet.write_row(row, col+2, significance)
             row += 1
             sheet.write(row, col, 'Site vs Ref T-Test p-value')
-            sheet.write_row(row, col+2, [ttest[year]['p'] for year in years])
+            sheet.write_row(row, col+2, [ttest[year]['p'] for year in years], number_format)
                        
             #group the historic data in excel
             for i in range(8):
@@ -317,13 +336,13 @@ def to_sheet(metal_data, metal_stats, workbook=None):
                 time_corr = time_corr if (len(loc_df['REPORT_RESULT_VALUE']) > 2) else ''
                 #write the location name
                 sheet.write(row, col, loc_name)
-                sheet.write(row, col+1, time_corr)
+                sheet.write(row, col+1, time_corr, number_format)
                 #write the data by year
                 for year in years:
                     mean = loc_df[loc_df['SAMPLE_YEAR'] == year]['REPORT_RESULT_VALUE'].mean()
                     #convert nan to None
                     mean = mean if not np.isnan(mean) else ''
-                    sheet.write(row, col+2, mean)
+                    sheet.write(row, col+2, mean, number_format)
                     col += 1
                 sheet.set_row(row, None, None, {'level': 1, 'hidden': True})
 
@@ -348,3 +367,89 @@ def to_sheet(metal_data, metal_stats, workbook=None):
 
     workbook.close()
 
+def siteLineChartSns(metal_data, name='site_line_chart'):
+    import seaborn as sns
+
+    #create figure and axis
+    fig, ax = plt.subplots()
+
+    #Line chart of site data over time. Each site is a line.
+    sns.lineplot(data=metal_data, x='SAMPLE_YEAR', y='REPORT_RESULT_VALUE', hue='LOC_ID', ci=None, ax=ax)
+
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    plt.savefig(f'files/{name}.png')
+    # plt.show()
+
+    
+def siteScatter(metal_data, name='site_scatter'):
+    #loc_xname to be the loc_id and first letter of subtype
+    metal_data['LOC_XNAME'] = metal_data['LOC_ID'].astype(str) + ' ' + metal_data['LOC_SUBTYPE'].str[0]
+
+    #sort loc_xname
+    metal_data = metal_data.sort_values(by=['LOC_XNAME'])
+    # show washed in blue, unwashed in orange
+    washed = metal_data[metal_data['LOC_SUBTYPE'] == 'WASHED']
+    unwashed = metal_data[metal_data['LOC_SUBTYPE'] == 'UNWASH']
+    #sort by LOC_XNAME
+    washed = washed.sort_values(by=['LOC_XNAME'])
+    unwashed = unwashed.sort_values(by=['LOC_XNAME'])
+    #X axis should be unique site name. Washed is blue, unwashed is orange.
+    sites = metal_data['LOC_XNAME'].unique()
+
+    #sort sites. Note that lox_xname can have a string and number. It should be sorted by number unless there is no number in the string.
+    import re
+    try:
+        sites = sorted(sites, key=lambda x: int(re.search(r'\d+', x).group()) if re.search(r'\d+', x) else 0)
+    except:
+        sites = sorted(sites)
+
+    fig, ax = plt.subplots()
+    plt.xticks(rotation=90)
+
+    for site in sites:
+        #on the first site, label the series
+        site_unwashed = unwashed[unwashed['LOC_XNAME'] == site]
+        site_washed = washed[washed['LOC_XNAME'] == site]
+        
+        if site == sites[0]:
+            ax.scatter(site_unwashed['LOC_XNAME'], site_unwashed['REPORT_RESULT_VALUE'], color='tab:orange', alpha=0.5, label='Unwashed')
+            ax.scatter(site_washed['LOC_XNAME'], site_washed['REPORT_RESULT_VALUE'], color='tab:blue', alpha=0.5, label='Washed')
+        else:
+            ax.scatter(site_unwashed['LOC_XNAME'], site_unwashed['REPORT_RESULT_VALUE'], color='tab:orange', alpha=0.5)
+            ax.scatter(site_washed['LOC_XNAME'], site_washed['REPORT_RESULT_VALUE'], color='tab:blue', alpha=0.5)
+
+    # title of chemical name 
+    ax.set_title('By Site')
+    ax.legend()
+    
+    plt.savefig(f'files/{name}_site_scatter.png', bbox_inches='tight', dpi=300)
+    # plt.show()
+
+
+
+def siteLineChart(metal_data, name='site_line_chart'):
+    #Line chart of site data over time. Each site is a line.
+    sites = metal_data['LOC_ID'].unique()
+
+    #create figure and axis
+    fig, ax = plt.subplots()
+
+    for site in sites:
+        site_data = metal_data[metal_data['LOC_ID'] == site]
+        #we want x axis to be year, but only one data point per year, being the mean.
+        years = site_data['SAMPLE_YEAR'].unique()
+        #sort years
+        years = sorted(years)
+        #get the mean of each year
+        means = []
+        for year in years:
+            means.append(site_data[site_data['SAMPLE_YEAR'] == year]['REPORT_RESULT_VALUE'].mean())
+        #plot the line
+        ax.plot(years, means, label=site)
+
+    #move legend outside of graph area
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    ax.set_title('Sites Over Time')
+    
+    plt.savefig(f'files/{name}_site_line.png', bbox_inches='tight', dpi=300)
+    # plt.show()
